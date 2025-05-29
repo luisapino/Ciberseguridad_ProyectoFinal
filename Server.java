@@ -1,77 +1,61 @@
-import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.util.Base64;
+import java.nio.file.Files;
+import java.security.*;
 
 public class Server {
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(5555);
+        System.out.println("[Servidor] Esperando conexión en puerto 5555...");
 
-    public static void main(String[] args) {
-        int port = 5555;
-        String outputFile = "archivo_recibido.txt";
+        new File("server_files").mkdir();
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Servidor esperando conexión en puerto " + port + "...");
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Cliente conectado.");
+        Socket socket = serverSocket.accept();
+        System.out.println("[Servidor] Cliente conectado.");
 
-            DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
-            DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
+        DataInputStream dis = new DataInputStream(socket.getInputStream());
+        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
-            // 1. Generar claves RSA
-            KeyPair keyPair = CryptoUtils.generateRSAKeyPair();
-            PrivateKey privateKey = keyPair.getPrivate();
-            String publicKeyEncoded = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
-            dos.writeUTF(publicKeyEncoded);
-            dos.flush();
-            System.out.println("Clave pública enviada.");
+        KeyPair keyPair = CryptoUtils.generateRSAKeyPair();
+        PublicKey publicKey = keyPair.getPublic();
+        PrivateKey privateKey = keyPair.getPrivate();
+        CryptoUtils.saveKey("server_files/public_key_server.pem", publicKey);
 
-            // 2. Recibir y descifrar clave AES
-            int keyLength = dis.readInt();
-            byte[] encryptedKey = dis.readNBytes(keyLength);
-            byte[] aesKeyBytes = CryptoUtils.decryptRSA(encryptedKey, privateKey);
-            SecretKey aesKey = new SecretKeySpec(aesKeyBytes, 0, aesKeyBytes.length, "AES");
-            System.out.println("Clave AES recibida y descifrada.");
+        dos.writeInt(publicKey.getEncoded().length);
+        dos.write(publicKey.getEncoded());
+        dos.flush();
+        System.out.println("[Servidor] Clave pública enviada.");
 
-            // 3. Recibir IV
-            byte[] iv = dis.readNBytes(16);
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+        int aesLen = dis.readInt();
+        byte[] encryptedAES = dis.readNBytes(aesLen);
+        byte[] aesKeyBytes = CryptoUtils.decryptRSA(encryptedAES, privateKey);
+        CryptoUtils.saveToFile("server_files/aes_key_descifrada.hex", aesKeyBytes);
+        SecretKey aesKey = new SecretKeySpec(aesKeyBytes, "AES");
+        System.out.println("[Servidor] Clave AES recibida y descifrada.");
 
-            // 4. Recibir archivo cifrado
-            int fileLength = dis.readInt();
-            byte[] encryptedFile = dis.readNBytes(fileLength);
+        int fileLen = dis.readInt();
+        byte[] encryptedFile = dis.readNBytes(fileLen);
+        byte[] decryptedFile = CryptoUtils.decryptAES(encryptedFile, aesKey);
+        CryptoUtils.saveToFile("server_files/received_file.txt", decryptedFile);
 
-            // 5. Descifrar archivo
-            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec);
-            byte[] decryptedFile = aesCipher.doFinal(encryptedFile);
+        int hashLen = dis.readInt();
+        byte[] clientHash = dis.readNBytes(hashLen);
+        CryptoUtils.saveToFile("server_files/hash_servidor.hex", CryptoUtils.sha256(decryptedFile));
 
-            // 6. Guardar archivo descifrado
-            try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                fos.write(decryptedFile);
-            }
-            System.out.println("Archivo recibido y descifrado guardado como: " + outputFile);
+        byte[] serverHash = CryptoUtils.sha256(decryptedFile);
 
-            // 7. Recibir hash del cliente
-            int hashLength = dis.readInt();
-            byte[] clientHash = dis.readNBytes(hashLength);
-
-            // 8. Calcular hash local y comparar
-            byte[] serverHash = CryptoUtils.sha256(decryptedFile);
-            boolean matches = MessageDigest.isEqual(clientHash, serverHash);
-
-            System.out.println(matches
-                    ? "✅ Integridad verificada: archivo transferido correctamente."
-                    : "❌ Error de integridad: los hashes no coinciden.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (MessageDigest.isEqual(clientHash, serverHash)) {
+            System.out.println("[Servidor] Archivo recibido correctamente con integridad verificada.");
+        } else {
+            System.out.println("[Servidor] Error: El archivo fue alterado o corrompido.");
         }
+
+        dis.close();
+        dos.close();
+        socket.close();
+        serverSocket.close();
     }
 }

@@ -1,51 +1,58 @@
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
+import java.nio.file.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.Base64;
 
 public class CryptoUtils {
-
-    // Genera un par de claves RSA (2048 bits)
-    public static KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(2048);
-        return generator.generateKeyPair();
+    public static KeyPair generateRSAKeyPair() throws Exception {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        return keyGen.generateKeyPair();
     }
 
-    // Cifra datos con clave pública RSA
+    public static SecretKey generateAESKey() throws Exception {
+        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(256);
+        return keyGen.generateKey();
+    }
+
     public static byte[] encryptRSA(byte[] data, PublicKey key) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, key);
         return cipher.doFinal(data);
     }
 
-    // Descifra datos con clave privada RSA
     public static byte[] decryptRSA(byte[] data, PrivateKey key) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, key);
         return cipher.doFinal(data);
     }
 
-    // Genera una clave AES de 256 bits
-    public static SecretKey generateAESKey() throws NoSuchAlgorithmException {
-        KeyGenerator generator = KeyGenerator.getInstance("AES");
-        generator.init(256);
-        return generator.generateKey();
+    public static byte[] encryptAES(byte[] data, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        return cipher.doFinal(data);
     }
 
-    // Calcula SHA-256
-    public static byte[] sha256(byte[] data) throws NoSuchAlgorithmException {
+    public static byte[] decryptAES(byte[] data, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return cipher.doFinal(data);
+    }
+
+    public static byte[] sha256(byte[] data) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return digest.digest(data);
     }
 
-    // Convierte SecretKey en Base64
-    public static String keyToBase64(SecretKey key) {
-        return Base64.getEncoder().encodeToString(key.getEncoded());
+    public static void saveToFile(String path, byte[] data) throws IOException {
+        Files.write(Paths.get(path), data);
     }
 
-    public static SecretKey base64ToAESKey(String base64Key) {
-        byte[] decoded = Base64.getDecoder().decode(base64Key);
-        return new SecretKeySpec(decoded, 0, decoded.length, "AES");
+    public static void saveKey(String path, Key key) throws IOException {
+        Files.write(Paths.get(path), key.getEncoded());
     }
 }
