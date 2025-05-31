@@ -1,20 +1,25 @@
+package server;
+
+import crypto.CryptoUtils;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.security.*;
 
-public class Server {
-    public static void main(String[] args) throws Exception {
-        ServerSocket serverSocket = new ServerSocket(5555);
-        System.out.println("[Servidor] Esperando conexión en puerto 5555...");
+import javafx.scene.control.TextArea;
 
-        new File("server_files").mkdir();
+public class Server {
+    public static void runServer(TextArea logArea) throws Exception {
+        File serverDir = new File("server_files");
+        if (!serverDir.exists()) serverDir.mkdirs();
+
+        ServerSocket serverSocket = new ServerSocket(5555);
+        logArea.appendText("[Servidor] Esperando conexión...\n");
 
         Socket socket = serverSocket.accept();
-        System.out.println("[Servidor] Cliente conectado.");
+        logArea.appendText("[Servidor] Cliente conectado.\n");
 
         DataInputStream dis = new DataInputStream(socket.getInputStream());
         DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
@@ -27,14 +32,11 @@ public class Server {
         dos.writeInt(publicKey.getEncoded().length);
         dos.write(publicKey.getEncoded());
         dos.flush();
-        System.out.println("[Servidor] Clave pública enviada.");
 
         int aesLen = dis.readInt();
         byte[] encryptedAES = dis.readNBytes(aesLen);
         byte[] aesKeyBytes = CryptoUtils.decryptRSA(encryptedAES, privateKey);
-        CryptoUtils.saveToFile("server_files/aes_key_descifrada.hex", aesKeyBytes);
         SecretKey aesKey = new SecretKeySpec(aesKeyBytes, "AES");
-        System.out.println("[Servidor] Clave AES recibida y descifrada.");
 
         int fileLen = dis.readInt();
         byte[] encryptedFile = dis.readNBytes(fileLen);
@@ -43,14 +45,14 @@ public class Server {
 
         int hashLen = dis.readInt();
         byte[] clientHash = dis.readNBytes(hashLen);
-        CryptoUtils.saveToFile("server_files/hash_servidor.hex", CryptoUtils.sha256(decryptedFile));
 
         byte[] serverHash = CryptoUtils.sha256(decryptedFile);
+        CryptoUtils.saveToFile("server_files/hash_servidor.hex", serverHash);
 
         if (MessageDigest.isEqual(clientHash, serverHash)) {
-            System.out.println("[Servidor] Archivo recibido correctamente con integridad verificada.");
+            logArea.appendText("[Servidor] Integridad verificada: OK.\n");
         } else {
-            System.out.println("[Servidor] Error: El archivo fue alterado o corrompido.");
+            logArea.appendText("[Servidor] Integridad fallida.\n");
         }
 
         dis.close();
