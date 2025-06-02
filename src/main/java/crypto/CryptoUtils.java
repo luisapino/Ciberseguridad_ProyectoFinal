@@ -1,10 +1,9 @@
+package crypto;
+
 import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.file.*;
 import java.security.*;
-import java.security.spec.*;
-import java.util.Base64;
 
 public class CryptoUtils {
     public static KeyPair generateRSAKeyPair() throws Exception {
