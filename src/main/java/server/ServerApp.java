@@ -32,7 +32,7 @@ public class ServerApp extends Application {
 
         Label titleLabel = new Label("Servidor de Transferencia Segura");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        titleLabel.setTextFill(Color.DARKGREEN);
+        titleLabel.setTextFill(Color.web("#251605"));
 
         VBox controlSection = createControlSection();
 
@@ -44,7 +44,7 @@ public class ServerApp extends Application {
 
         VBox root = new VBox(15);
         root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #f0f8f0;");
+        root.setStyle("-fx-background-color: #D9DCE7;");
 
         root.getChildren().addAll(
                 titleLabel,
@@ -58,7 +58,7 @@ public class ServerApp extends Application {
                 logSection
         );
 
-        Scene scene = new Scene(new ScrollPane(root), 750, 700);
+        Scene scene = new Scene(new ScrollPane(root), 500, 700);
         stage.setScene(scene);
         stage.show();
 
@@ -71,18 +71,18 @@ public class ServerApp extends Application {
 
     private VBox createControlSection() {
         VBox section = new VBox(10);
-        section.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 5;");
+        section.setStyle("-fx-background-color:#ffffff; -fx-padding: 15; -fx-background-radius: 5;");
 
         Label sectionTitle = new Label("⚙️ Control del Servidor");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         startButton = new Button("🚀 Iniciar Servidor");
-        startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+        startButton.setStyle("-fx-background-color:#8AEDC9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         startButton.setPrefWidth(200);
         startButton.setOnAction(e -> startServer());
 
         stopButton = new Button("⏹️ Detener Servidor");
-        stopButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+        stopButton.setStyle("-fx-background-color:#AB2247; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         stopButton.setPrefWidth(200);
         stopButton.setDisable(true);
         stopButton.setOnAction(e -> stopServer());
@@ -109,7 +109,7 @@ public class ServerApp extends Application {
 
         operationProgress = new ProgressBar(0);
         operationProgress.setPrefWidth(400);
-        operationProgress.setStyle("-fx-accent: #4CAF50;");
+        operationProgress.setStyle("-fx-accent: #8AEDC9;");
         operationProgress.setVisible(false);
 
         section.getChildren().addAll(sectionTitle, statusLabel, connectionInfoLabel, operationProgress);
@@ -146,11 +146,16 @@ public class ServerApp extends Application {
         logArea.setPrefRowCount(15);
         logArea.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
-        Button clearLogButton = new Button("🗑️ Limpiar Log");
+        Button clearLogButton = new Button("Limpiar Log");
         clearLogButton.setOnAction(e -> {
             logArea.clear();
             logArea.appendText("=== LOG LIMPIADO ===\n\n");
         });
+        clearLogButton.setStyle(
+            "-fx-background-color: #BB4D69;" + 
+            "-fx-text-fill: white;" +         
+            "-fx-font-weight: bold;"
+        );
 
         section.getChildren().addAll(sectionTitle, logArea, clearLogButton);
         return section;
@@ -158,7 +163,7 @@ public class ServerApp extends Application {
 
     private Separator createSeparator() {
         Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #e0e0e0;");
+        sep.setStyle("-fx-background-color: #AB2247;");
         return sep;
     }
 

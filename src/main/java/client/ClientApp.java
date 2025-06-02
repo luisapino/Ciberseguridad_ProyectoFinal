@@ -30,7 +30,7 @@ public class ClientApp extends Application {
 
         Label titleLabel = new Label("Cliente de Transferencia Segura");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        titleLabel.setTextFill(Color.DARKBLUE);
+        titleLabel.setTextFill(Color.web("#251605"));
 
         VBox fileSection = createFileSelectionSection();
 
@@ -40,7 +40,7 @@ public class ClientApp extends Application {
 
         VBox root = new VBox(15);
         root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #f5f5f5;");
+        root.setStyle("-fx-background-color: #D9DCE7;");
 
         root.getChildren().addAll(
                 titleLabel,
@@ -52,7 +52,7 @@ public class ClientApp extends Application {
                 logSection
         );
 
-        Scene scene = new Scene(new ScrollPane(root), 700, 600);
+        Scene scene = new Scene(new ScrollPane(root), 485, 600);
         stage.setScene(scene);
         stage.show();
     }
@@ -72,11 +72,11 @@ public class ClientApp extends Application {
         fileInfoLabel.setTextFill(Color.GRAY);
 
         selectButton = new Button("🔍 Seleccionar Archivo");
-        selectButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        selectButton.setStyle("-fx-background-color: #8AEDC9; -fx-text-fill: white; -fx-font-weight: bold;");
         selectButton.setOnAction(e -> selectFile());
 
         sendButton = new Button("🚀 Enviar Archivo Seguro");
-        sendButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
+        sendButton.setStyle("-fx-background-color:rgb(22, 145, 245); -fx-text-fill: white; -fx-font-weight: bold;");
         sendButton.setDisable(true);
         sendButton.setOnAction(e -> sendFile());
 
@@ -95,7 +95,7 @@ public class ClientApp extends Application {
 
         progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(400);
-        progressBar.setStyle("-fx-accent: #4CAF50;");
+        progressBar.setStyle("-fx-accent: #8AEDC9;");
 
         statusLabel = new Label("Esperando archivo...");
         statusLabel.setTextFill(Color.GRAY);
@@ -126,7 +126,7 @@ public class ClientApp extends Application {
 
     private Separator createSeparator() {
         Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #e0e0e0;");
+        sep.setStyle("-fx-background-color: #AB2247;");
         return sep;
     }
 
