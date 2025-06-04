@@ -82,7 +82,7 @@ public class ClientApp extends Application {
         fileInfoLabel.setTextFill(Color.GRAY);
 
         selectButton = new Button("🔍 Seleccionar Archivo");
-        selectButton.setStyle("-fx-background-color: #8AEDC9; -fx-text-fill: white; -fx-font-weight: bold;");
+        selectButton.setStyle("-fx-background-color: #2E8B57; -fx-text-fill: white; -fx-font-weight: bold;");
         selectButton.setOnAction(e -> selectFile());
 
         sendButton = new Button("🚀 Enviar Archivo Seguro");
@@ -160,7 +160,7 @@ public class ClientApp extends Application {
         VBox section = new VBox(10);
         section.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 5;");
 
-        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas");
+        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas Cliente");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         logArea = new TextArea();

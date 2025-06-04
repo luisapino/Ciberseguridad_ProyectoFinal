@@ -87,7 +87,7 @@ public class ServerApp extends Application {
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         startButton = new Button("🚀 Iniciar Servidor");
-        startButton.setStyle("-fx-background-color:#8AEDC9; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
+        startButton.setStyle("-fx-background-color:#2E8B57; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
         startButton.setPrefWidth(200);
         startButton.setOnAction(e -> startServer());
 
@@ -190,7 +190,7 @@ public class ServerApp extends Application {
         VBox section = new VBox(10);
         section.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 5;");
 
-        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas");
+        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas Servidor");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         logArea = new TextArea();
