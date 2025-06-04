@@ -1,4 +1,4 @@
-## Integrantes
+## Team members
 
 ### Luisa Castaño
 ### Santiago Barraza
