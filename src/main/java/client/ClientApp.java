@@ -11,8 +11,14 @@ import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ClientApp extends Application {
     private TextArea logArea;
@@ -21,8 +27,11 @@ public class ClientApp extends Application {
     private Label fileInfoLabel;
     private Button selectButton;
     private Button sendButton;
+    private Button viewFilesButton;
     private TextField fileField;
     private File selectedFile;
+    private ListView<String> fileListView;
+    private TextArea fileContentArea;
 
     @Override
     public void start(Stage stage) {
@@ -30,17 +39,16 @@ public class ClientApp extends Application {
 
         Label titleLabel = new Label("Cliente de Transferencia Segura");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        titleLabel.setTextFill(Color.DARKBLUE);
+        titleLabel.setTextFill(Color.web("#251605"));
 
         VBox fileSection = createFileSelectionSection();
-
         VBox progressSection = createProgressSection();
-
+        VBox filesViewSection = createFilesViewSection();
         VBox logSection = createLogSection();
 
         VBox root = new VBox(15);
         root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #f5f5f5;");
+        root.setStyle("-fx-background-color: #D9DCE7;");
 
         root.getChildren().addAll(
                 titleLabel,
@@ -49,10 +57,12 @@ public class ClientApp extends Application {
                 createSeparator(),
                 progressSection,
                 createSeparator(),
+                filesViewSection,
+                createSeparator(),
                 logSection
         );
 
-        Scene scene = new Scene(new ScrollPane(root), 700, 600);
+        Scene scene = new Scene(new ScrollPane(root), 480, 800);
         stage.setScene(scene);
         stage.show();
     }
@@ -72,11 +82,11 @@ public class ClientApp extends Application {
         fileInfoLabel.setTextFill(Color.GRAY);
 
         selectButton = new Button("🔍 Seleccionar Archivo");
-        selectButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
+        selectButton.setStyle("-fx-background-color: #2E8B57; -fx-text-fill: white; -fx-font-weight: bold;");
         selectButton.setOnAction(e -> selectFile());
 
         sendButton = new Button("🚀 Enviar Archivo Seguro");
-        sendButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
+        sendButton.setStyle("-fx-background-color:rgb(22, 145, 245); -fx-text-fill: white; -fx-font-weight: bold;");
         sendButton.setDisable(true);
         sendButton.setOnAction(e -> sendFile());
 
@@ -95,7 +105,7 @@ public class ClientApp extends Application {
 
         progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(400);
-        progressBar.setStyle("-fx-accent: #4CAF50;");
+        progressBar.setStyle("-fx-accent: #8AEDC9;");
 
         statusLabel = new Label("Esperando archivo...");
         statusLabel.setTextFill(Color.GRAY);
@@ -104,11 +114,53 @@ public class ClientApp extends Application {
         return section;
     }
 
+    private VBox createFilesViewSection() {
+        VBox section = new VBox(10);
+        section.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 5;");
+
+        Label sectionTitle = new Label("📂 Archivos Criptográficos Generados");
+        sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
+        viewFilesButton = new Button("🔍 Ver Archivos del Cliente");
+        viewFilesButton.setStyle("-fx-background-color: #6A5ACD; -fx-text-fill: white; -fx-font-weight: bold;");
+        viewFilesButton.setOnAction(e -> refreshFileList());
+
+        Button openFolderButton = new Button("📁 Abrir Carpeta client_files");
+        openFolderButton.setStyle("-fx-background-color: #2E8B57; -fx-text-fill: white; -fx-font-weight: bold;");
+        openFolderButton.setOnAction(e -> openClientFolder());
+
+        HBox buttonBox = new HBox(10, viewFilesButton, openFolderButton);
+
+        // Lista de archivos
+        fileListView = new ListView<>();
+        fileListView.setPrefHeight(120);
+        fileListView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                showFileContent();
+            }
+        });
+
+        Label instructionLabel = new Label("💡 Doble clic en un archivo para ver su contenido");
+        instructionLabel.setFont(Font.font("Arial", 10));
+        instructionLabel.setTextFill(Color.GRAY);
+
+        // Área para mostrar contenido del archivo
+        fileContentArea = new TextArea();
+        fileContentArea.setEditable(false);
+        fileContentArea.setPrefRowCount(6);
+        fileContentArea.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        fileContentArea.setPromptText("Selecciona un archivo para ver su contenido...");
+
+        section.getChildren().addAll(sectionTitle, buttonBox, fileListView, instructionLabel, 
+                                   new Label("📄 Contenido del Archivo:"), fileContentArea);
+        return section;
+    }
+
     private VBox createLogSection() {
         VBox section = new VBox(10);
         section.setStyle("-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 5;");
 
-        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas");
+        Label sectionTitle = new Label("📋 Log de Operaciones Criptográficas Cliente");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         logArea = new TextArea();
@@ -118,6 +170,7 @@ public class ClientApp extends Application {
         logArea.appendText("=== CLIENTE DE TRANSFERENCIA SEGURA ===\n");
         logArea.appendText("🔐 Protocolo: RSA + AES-256 + SHA-256\n");
         logArea.appendText("📡 Puerto: 5555\n");
+        logArea.appendText("📁 Archivos guardados en: client_files/\n");
         logArea.appendText("Esperando selección de archivo...\n\n");
 
         section.getChildren().addAll(sectionTitle, logArea);
@@ -126,8 +179,140 @@ public class ClientApp extends Application {
 
     private Separator createSeparator() {
         Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #e0e0e0;");
+        sep.setStyle("-fx-background-color: #AB2247;");
         return sep;
+    }
+
+    private void refreshFileList() {
+        ObservableList<String> files = FXCollections.observableArrayList();
+        File clientDir = new File("client_files");
+        
+        if (!clientDir.exists()) {
+            clientDir.mkdirs();
+            files.add("📁 Carpeta client_files creada - No hay archivos aún");
+        } else {
+            File[] fileArray = clientDir.listFiles();
+            if (fileArray != null && fileArray.length > 0) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                for (File file : fileArray) {
+                    if (file.isFile()) {
+                        String fileType = getFileTypeIcon(file.getName());
+                        String fileInfo = String.format("%s %s (%s) - %s", 
+                            fileType, 
+                            file.getName(), 
+                            formatFileSize(file.length()),
+                            sdf.format(new Date(file.lastModified()))
+                        );
+                        files.add(fileInfo);
+                    }
+                }
+            } else {
+                files.add("📁 Carpeta vacía - No hay archivos generados aún");
+            }
+        }
+        
+        fileListView.setItems(files);
+        logArea.appendText("🔍 Lista de archivos actualizada (" + (files.size()) + " elementos)\n");
+    }
+
+    private String getFileTypeIcon(String fileName) {
+        if (fileName.contains("public_key")) return "🔑";
+        if (fileName.contains("private_key")) return "🗝️";
+        if (fileName.contains("aes_key")) return "🔐";
+        if (fileName.contains("hash")) return "🧮";
+        if (fileName.contains("cifrado") || fileName.contains("encrypted")) return "🔒";
+        if (fileName.contains("original")) return "📄";
+        return "📎";
+    }
+
+    private void showFileContent() {
+        String selectedItem = fileListView.getSelectionModel().getSelectedItem();
+        if (selectedItem == null || selectedItem.startsWith("📁")) {
+            return;
+        }
+
+        // Extraer el nombre del archivo de la cadena formateada
+        String fileName = selectedItem.split(" ")[1]; // Toma la segunda parte después del icono
+        File file = new File("client_files/" + fileName);
+
+        if (!file.exists()) {
+            fileContentArea.setText("❌ Archivo no encontrado: " + fileName);
+            return;
+        }
+
+        try {
+            byte[] content = Files.readAllBytes(file.toPath());
+            String displayContent;
+
+            if (fileName.endsWith(".pem")) {
+                // Mostrar archivos PEM como texto
+                displayContent = new String(content);
+            } else if (fileName.endsWith(".hex")) {
+                // Mostrar archivos hex como hexadecimal
+                displayContent = "Contenido hexadecimal:\n" + bytesToHex(content);
+            } else if (fileName.endsWith(".bin")) {
+                // Mostrar archivos binarios como hex
+                displayContent = "Archivo binario (hex):\n" + bytesToHex(content);
+                if (content.length > 200) {
+                    displayContent += "\n\n... (mostrando primeros 200 bytes de " + content.length + " totales)";
+                }
+            } else {
+                // Intentar mostrar como texto
+                try {
+                    displayContent = new String(content);
+                } catch (Exception e) {
+                    displayContent = "Archivo binario (hex):\n" + bytesToHex(content);
+                }
+            }
+
+            String header = String.format("📄 %s (%s)\n%s\n\n", 
+                fileName, formatFileSize(content.length), "=".repeat(50));
+            fileContentArea.setText(header + displayContent);
+
+        } catch (Exception e) {
+            fileContentArea.setText("❌ Error al leer archivo: " + e.getMessage());
+        }
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        int maxBytes = Math.min(bytes.length, 200); // Limitar a 200 bytes para no sobrecargar la UI
+        
+        for (int i = 0; i < maxBytes; i++) {
+            if (i > 0 && i % 16 == 0) {
+                result.append("\n");
+            }
+            result.append(String.format("%02X ", bytes[i]));
+        }
+        
+        if (bytes.length > maxBytes) {
+            result.append("\n... (").append(bytes.length - maxBytes).append(" bytes más)");
+        }
+        
+        return result.toString();
+    }
+
+    private void openClientFolder() {
+        try {
+            File clientDir = new File("client_files");
+            if (!clientDir.exists()) {
+                clientDir.mkdirs();
+            }
+            
+            // Intentar abrir el explorador de archivos
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                Runtime.getRuntime().exec("explorer " + clientDir.getAbsolutePath());
+            } else if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+                Runtime.getRuntime().exec("open " + clientDir.getAbsolutePath());
+            } else {
+                // Linux
+                Runtime.getRuntime().exec("xdg-open " + clientDir.getAbsolutePath());
+            }
+            logArea.appendText("📁 Abriendo carpeta client_files...\n");
+        } catch (Exception e) {
+            logArea.appendText("❌ Error al abrir carpeta: " + e.getMessage() + "\n");
+            showAlert("Error", "No se pudo abrir la carpeta: " + e.getMessage());
+        }
     }
 
     private void selectFile() {
@@ -197,6 +382,7 @@ public class ClientApp extends Application {
                                 statusLabel.setTextFill(Color.GREEN);
                                 progressBar.setProgress(1.0);
                                 logArea.appendText("\n🎉 " + message + "\n");
+                                logArea.appendText("📁 Archivos generados guardados en client_files/\n");
                                 showAlert("Éxito", "Archivo transferido correctamente con verificación de integridad.");
                             } else {
                                 statusLabel.setText("❌ " + message);
@@ -207,6 +393,9 @@ public class ClientApp extends Application {
 
                             sendButton.setDisable(false);
                             selectButton.setDisable(false);
+                            
+                            // Auto-refresh file list after transfer
+                            refreshFileList();
                         });
                     }
                 });
